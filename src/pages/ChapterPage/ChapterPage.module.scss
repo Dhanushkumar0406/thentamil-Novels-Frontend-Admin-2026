@@ -1,0 +1,415 @@
+.chapterContainer {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0B1A2D 0%, #0a1628 100%);
+  color: #fff;
+  transition: background 0.3s ease, color 0.3s ease;
+
+  [data-theme="light"] & {
+    background: #ffffff;
+    color: #0a2a43;
+  }
+}
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  padding-top: 6rem;
+}
+
+.backButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 2rem;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(-4px);
+  }
+
+  [data-theme="light"] & {
+    background: rgba(0, 0, 0, 0.05);
+    color: #0a2a43;
+    border-color: rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.chapterContent {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 3rem;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.novelTitle {
+  font-size: 2.75rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: #fbbf24;
+  font-family: 'Noto Sans Tamil', sans-serif;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  [data-theme="light"] & {
+    color: #d97706;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.chapterHeading {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #60a5fa;
+  font-family: 'Noto Sans Tamil', sans-serif;
+  border-bottom: 2px solid rgba(96, 165, 250, 0.3);
+  padding-bottom: 1rem;
+
+  [data-theme="light"] & {
+    color: #2563eb;
+    border-bottom-color: rgba(37, 99, 235, 0.2);
+  }
+}
+
+.chapterTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #fff;
+  font-family: 'Noto Sans Tamil', sans-serif;
+
+  [data-theme="light"] & {
+    color: #0a2a43;
+  }
+}
+
+.placeholder {
+  font-size: 1.2rem;
+  color: #9ca3af;
+  text-align: center;
+  padding: 4rem 0;
+
+  [data-theme="light"] & {
+    color: #6b7280;
+  }
+}
+
+.storyContent {
+  font-size: 1.125rem;
+  line-height: 2;
+  color: #e5e7eb;
+  text-align: justify;
+  font-family: 'Noto Sans Tamil', 'Lato', sans-serif;
+
+  [data-theme="light"] & {
+    color: #1f2937;
+  }
+}
+
+.paragraph {
+  margin-bottom: 1.75rem;
+  text-indent: 2rem;
+
+  &:first-child {
+    text-indent: 0;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.chapterNavigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  gap: 1rem;
+
+  [data-theme="light"] & {
+    border-top-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.navButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  font-family: 'Noto Sans Tamil', sans-serif;
+
+  &:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  [data-theme="light"] & {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 1.5rem;
+    padding-top: 5rem;
+  }
+
+  .chapterContent {
+    padding: 2rem 1.5rem;
+  }
+
+  .chapterTitle {
+    font-size: 2rem;
+  }
+
+  .novelTitle {
+    font-size: clamp(1.8rem, 4vw, 2.75rem);
+  }
+
+  .chapterHeading {
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+  }
+
+  .storyContent {
+    font-size: 1.05rem;
+    line-height: 1.9;
+  }
+
+  .paragraph {
+    margin-bottom: 1.5rem;
+    text-indent: 1.5rem;
+  }
+
+  .chapterNavigation {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .navButton {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 1rem;
+    padding-top: 4.5rem;
+  }
+
+  .chapterContent {
+    padding: 1.5rem 1rem;
+  }
+  .chapterTitle {
+    font-size: 1.7rem;
+  }
+
+  .novelTitle {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+
+  .chapterHeading {
+    font-size: clamp(1.3rem, 4vw, 1.7rem);
+  }
+
+  .placeholder {
+    font-size: 1rem;
+    padding: 3rem 0;
+  }
+
+  .storyContent {
+    font-size: 1rem;
+    line-height: 1.8;
+    text-align: left;
+  }
+
+  .paragraph {
+    margin-bottom: 1.25rem;
+    text-indent: 1rem;
+  }
+
+  .chapterNavigation {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    gap: 0.5rem;
+  }
+
+  .navButton {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}
+
+// Tablet devices optimization (768px - 1024px)
+@media (min-width: 768px) and (max-width: 1024px) {
+  .chapterContainer {
+    padding-top: 0;
+  }
+
+  .content {
+    max-width: 900px;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    padding-top: clamp(5rem, 8vw, 7rem);
+  }
+
+  .backButton {
+    padding: clamp(0.6rem, 1.5vw, 0.8rem) clamp(1rem, 2vw, 1.5rem);
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+  }
+
+  .chapterContent {
+    padding: clamp(2rem, 4vw, 3rem);
+    border-radius: 12px;
+  }
+
+  .chapterTitle {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    margin-bottom: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  .storyContent {
+    font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+    line-height: 1.9;
+  }
+
+  .paragraph {
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    text-indent: clamp(1.25rem, 2.5vw, 2rem);
+  }
+}
+
+// Extra small devices (360px and below)
+@media (max-width: 360px) {
+  .chapterContainer {
+    padding-top: 0;
+  }
+
+  .content {
+    max-width: 100%;
+    padding: 1rem;
+    padding-top: clamp(4.5rem, 10vw, 5.5rem);
+    margin: 0;
+  }
+
+  .backButton {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateX(-2px);
+    }
+
+    [data-theme="light"] & {
+      background: rgba(0, 0, 0, 0.04);
+      color: #0a2a43;
+      border-color: rgba(0, 0, 0, 0.08);
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.08);
+      }
+    }
+  }
+
+  .chapterContent {
+    padding: 1.2rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .chapterTitle {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1.2rem;
+    line-height: 1.3;
+    word-wrap: break-word;
+  }
+
+  .novelTitle {
+    font-size: 1.4rem;
+    line-height: 1.3;
+    word-wrap: break-word;
+  }
+
+  .chapterHeading {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .placeholder {
+    font-size: 0.95rem;
+    padding: 2rem 0;
+  }
+
+  .storyContent {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    text-align: justify;
+  }
+
+  .paragraph {
+    margin-bottom: 1rem;
+    text-indent: 0.8rem;
+
+    &:first-child {
+      text-indent: 0;
+    }
+  }
+
+  .chapterNavigation {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    gap: 0.4rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .navButton {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    flex: 1;
+    min-width: 120px;
+    border-radius: 6px;
+  }
+}

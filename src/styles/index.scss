@@ -1,0 +1,21 @@
+/* ============================================
+   MAIN STYLES ENTRY POINT
+   ============================================ */
+
+/* 1. Tailwind CSS */
+@use './tailwind.scss';
+
+/* 2. Base & Resets */
+@use './base/reset';
+
+/* 3. Abstracts (Variables, Mixins, Animations) */
+@use './abstracts/variables';
+@use './abstracts/animations';
+@use './abstracts/utilities';
+
+/* 4. Vendors (Third-party overrides) */
+@use './vendors/neon-utilities';
+@use './vendors/swiper-overrides';
+
+/* 5. App-level styles */
+@use './App.scss';
