@@ -70,9 +70,10 @@
 
 .banner-carousel-wrapper {
   width: 100%;
-  background: linear-gradient(135deg, #1a4d7a 0%, #0d3a5c 100%);
+  background: var(--color-bg-primary);
   padding: 40px 0;
   position: relative;
+  transition: background-color var(--transition-normal);
 }
 
 .banner-swiper {
@@ -101,8 +102,9 @@
 
 .banner-text-section {
   flex: 1;
-  color: white;
+  color: var(--color-text-primary);
   text-align: left;
+  transition: color var(--transition-normal);
 }
 
 .banner-subtitle {
@@ -110,32 +112,36 @@
   font-weight: 600;
   letter-spacing: 4px;
   margin-bottom: 10px;
-  color: #ffffff;
+  color: var(--color-text-primary);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: color var(--transition-normal);
 }
 
 .banner-title {
   font-size: 48px;
   font-weight: 700;
   margin-bottom: 10px;
-  color: #ffffff;
+  color: var(--color-text-primary);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   font-family: 'Noto Sans Tamil', sans-serif;
+  transition: color var(--transition-normal);
 }
 
 .banner-tagline {
   font-size: 32px;
   font-style: italic;
   margin-bottom: 15px;
-  color: #e0e0e0;
+  color: var(--color-text-secondary);
   font-family: 'Georgia', serif;
+  transition: color var(--transition-normal);
 }
 
 .banner-description {
   font-size: 20px;
   margin-bottom: 20px;
-  color: #ffffff;
+  color: var(--color-text-primary);
   font-family: 'Noto Sans Tamil', sans-serif;
+  transition: color var(--transition-normal);
 }
 
 .banner-links {
@@ -152,18 +158,21 @@
 
 .banner-link {
   font-size: 14px;
-  color: #ffffff;
+  color: var(--color-text-primary);
   font-weight: 500;
+  transition: color var(--transition-normal);
 }
 
 .banner-link-separator {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-muted);
+  transition: color var(--transition-normal);
 }
 
 .banner-welcome-text {
   font-size: 16px;
-  color: #e0e0e0;
+  color: var(--color-text-secondary);
   margin-top: 10px;
+  transition: color var(--transition-normal);
 }
 
 /* Phone Mockups Section */
@@ -324,7 +333,8 @@
 
 .banner-text-section-center {
   text-align: center;
-  color: white;
+  color: var(--color-text-primary);
+  transition: color var(--transition-normal);
 }
 
 .banner-text-section-center .banner-subtitle {
@@ -332,24 +342,27 @@
   font-weight: 600;
   letter-spacing: 2px;
   margin-bottom: 15px;
-  color: #ffffff;
+  color: var(--color-text-primary);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   font-family: 'Noto Sans Tamil', sans-serif;
+  transition: color var(--transition-normal);
 }
 
 .banner-text-section-center .banner-title {
   font-size: 52px;
   font-weight: 700;
   margin-bottom: 10px;
-  color: #00d9ff;
+  color: var(--color-accent-primary);
   text-shadow: 0 3px 10px rgba(0, 217, 255, 0.4);
+  transition: color var(--transition-normal);
 }
 
 .banner-text-section-center .banner-tagline {
   font-size: 36px;
   font-style: italic;
-  color: #e0e0e0;
+  color: var(--color-text-secondary);
   font-family: 'Georgia', serif;
+  transition: color var(--transition-normal);
 }
 
 /* YouTube Authors Section */
@@ -400,8 +413,9 @@
 .author-name {
   font-size: 20px;
   font-weight: 600;
-  color: white;
+  color: var(--color-text-primary);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: color var(--transition-normal);
 }
 
 /* Responsive Design */
