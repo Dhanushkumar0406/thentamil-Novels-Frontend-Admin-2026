@@ -53,7 +53,7 @@ class LazyLoadErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.error('Lazy loading error:', error, errorInfo);
     }
   }
