@@ -5,8 +5,6 @@ import './routes.scss';
 // Lazy load page components
 const NovelsPage = lazy(() => import('../pages/NovelsPage/NovelsPage'));
 const NovelDetailPage = lazy(() => import('../pages/NovelDetailPage/NovelDetailPage'));
-const ThenmozhiNovelPage = lazy(() => import('../pages/ThenmozhiNovelPage/ThenmozhiNovelPage'));
-const MohanaNovelPage = lazy(() => import('../pages/MohanaNovelPage/MohanaNovelPage'));
 const ChapterPage = lazy(() => import('../pages/ChapterPage/ChapterPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage/LoginPage'));
 const SignupPage = lazy(() => import('../pages/SignupPage/SignupPage'));
@@ -83,10 +81,6 @@ const AppRoutes = () => {
         <Route path="/" element={<NovelsPage />} />
         <Route path="/novels" element={<NovelsPage />} />
         <Route path="/about" element={<AboutUsPage />} />
-        {/* Specific routes first (for hardcoded novel pages) */}
-        <Route path="/novel/1" element={<ThenmozhiNovelPage />} />
-        <Route path="/novel/3" element={<MohanaNovelPage />} />
-        {/* Generic routes after specific ones */}
         <Route path="/novel/:id" element={<NovelDetailPage />} />
         <Route path="/novel/:novelId/chapter/:chapterId" element={<ChapterPage />} />
 

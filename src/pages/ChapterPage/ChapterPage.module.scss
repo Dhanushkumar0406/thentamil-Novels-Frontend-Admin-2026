@@ -1,12 +1,12 @@
 .chapterContainer {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0B1A2D 0%, #0a1628 100%);
+  background: #0a0a0a;
   color: #fff;
   transition: background 0.3s ease, color 0.3s ease;
 
   [data-theme="light"] & {
-    background: #ffffff;
-    color: #0a2a43;
+    background: #0a0a0a;
+    color: #fff;
   }
 }
 
