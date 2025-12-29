@@ -32,6 +32,17 @@ class ApiClient {
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Log API requests in development
+        if (ENV.IS_DEVELOPMENT) {
+          console.log('API Request:', {
+            method: config.method?.toUpperCase(),
+            url: config.url,
+            fullUrl: `${config.baseURL}${config.url}`,
+            headers: config.headers,
+          });
+        }
+
         return config;
       },
       (error: AxiosError) => {
@@ -89,9 +100,45 @@ class ApiClient {
         }
 
         if (!error.response) {
+          // Enhanced network error logging
+          console.error('Network Error Details:', {
+            message: error.message,
+            code: error.code,
+            config: {
+              url: error.config?.url,
+              method: error.config?.method,
+              baseURL: error.config?.baseURL,
+            },
+            stack: error.stack,
+          });
+
+          // Determine specific error type
+          let errorMessage = 'Network error. Please check your connection.';
+          let errorStatus = 0;
+
+          if (error.code === 'ECONNREFUSED') {
+            errorMessage = 'Connection refused. Backend server may not be running.';
+            errorStatus = 503;
+          } else if (error.code === 'ENOTFOUND') {
+            errorMessage = 'Host not found. Check API base URL configuration.';
+            errorStatus = 503;
+          } else if (error.code === 'ERR_NETWORK') {
+            errorMessage = 'Network error. Check if backend server is running and accessible.';
+            errorStatus = 503;
+          } else if (error.message.includes('timeout')) {
+            errorMessage = 'Request timeout. Backend server may be slow or unresponsive.';
+            errorStatus = 408;
+          }
+
           return Promise.reject({
-            status: 0,
-            message: 'Network error. Please check your connection.',
+            status: errorStatus,
+            message: errorMessage,
+            code: error.code,
+            details: {
+              originalMessage: error.message,
+              apiBaseUrl: ENV.API_BASE_URL,
+              requestedUrl: error.config?.url,
+            },
           });
         }
 
