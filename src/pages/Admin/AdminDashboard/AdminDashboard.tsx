@@ -1,20 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getDashboardStats } from '../../../services/API/adminMockService';
+import { adminApi, DashboardStats } from '../../../api';
 import StatCard from '../../../components/admin/StatCard/StatCard';
 import styles from './AdminDashboard.module.scss';
-import { DashboardStats } from '../../../types';
-
-/**
- * AdminDashboard Component
- *
- * Main dashboard overview page showing:
- * - Key statistics (novels, chapters, users, subscriptions)
- * - Recent activity (optional)
- *
- * INTEGRATION POINT:
- * - Replace getDashboardStats() call with real API endpoint
- * - Currently using mock data from adminMockService.js
- */
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -30,17 +17,15 @@ const AdminDashboard = () => {
       setLoading(true);
       setError(null);
 
-      // TODO: Replace with real API call
-      const response = await getDashboardStats();
+      const data = await adminApi.dashboard.getStats();
+      setStats(data);
 
-      if (response.success) {
-        setStats(response.data);
-      } else {
-        setError('Failed to load dashboard statistics');
-      }
-    } catch (err) {
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Failed to load dashboard statistics';
       console.error('Dashboard stats error:', err);
-      setError('An error occurred while loading statistics');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -63,7 +48,7 @@ const AdminDashboard = () => {
         <div className={styles.errorIcon}>⚠️</div>
         <h2 className={styles.errorTitle}>Failed to Load Dashboard</h2>
         <p className={styles.errorMessage}>{error}</p>
-        <button className={styles.retryButton} onClick={fetchDashboardStats}>
+        <button type="button" className={styles.retryButton} onClick={fetchDashboardStats}>
           Retry
         </button>
       </div>
@@ -91,7 +76,7 @@ const AdminDashboard = () => {
             Welcome to the admin panel. Here's your platform overview.
           </p>
         </div>
-        <button className={styles.refreshButton} onClick={fetchDashboardStats}>
+        <button type="button" className={styles.refreshButton} onClick={fetchDashboardStats}>
           <span className={styles.refreshIcon}>🔄</span>
           <span>Refresh</span>
         </button>
@@ -118,32 +103,12 @@ const AdminDashboard = () => {
           color="purple"
         />
         <StatCard
-          title="Subscriptions"
-          value={stats.totalSubscriptions}
-          icon="⭐"
+          title="Total Views"
+          value={stats.totalViews}
+          icon="👁️"
           color="orange"
         />
       </div>
-
-      {/* Recent Activity Section (Optional) */}
-      {stats.recentActivity && stats.recentActivity.length > 0 && (
-        <div className={styles.activitySection}>
-          <h2 className={styles.sectionTitle}>Recent Activity</h2>
-          <div className={styles.activityList}>
-            {stats.recentActivity.map((activity) => (
-              <div key={activity.id} className={styles.activityItem}>
-                <div className={styles.activityIcon}>📝</div>
-                <div className={styles.activityContent}>
-                  <p className={styles.activityAction}>{activity.action}</p>
-                  <p className={styles.activityTime}>
-                    {new Date(activity.timestamp).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Quick Actions */}
       <div className={styles.quickActions}>

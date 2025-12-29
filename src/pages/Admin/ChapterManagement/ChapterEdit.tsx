@@ -1,21 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getChapterById, updateChapter, CHAPTER_TYPES, CHAPTER_STATUS } from '../../../services/API/adminMockService';
+import { adminApi, UpdateChapterPayload } from '../../../api';
 import styles from '../NovelManagement/NovelManagement.module.scss';
 
 interface ChapterEditFormData {
-  chapter_number: number;
-  name: string;
+  chapterNumber: number;
   title: string;
-  chapter_type: string;
-  thumbnail: string;
   content: string;
-  status: string;
 }
 
 interface FormErrors {
-  name?: string;
   title?: string;
+  content?: string;
   [key: string]: string | undefined;
 }
 
@@ -25,13 +21,9 @@ const ChapterEdit = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [formData, setFormData] = useState<ChapterEditFormData>({
-    chapter_number: 1,
-    name: '',
+    chapterNumber: 1,
     title: '',
-    chapter_type: 'Regular',
-    thumbnail: '',
-    content: '',
-    status: 'Draft'
+    content: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -40,26 +32,30 @@ const ChapterEdit = () => {
   }, [id]);
 
   const fetchChapter = async () => {
+    if (!id) {
+      alert('Invalid chapter ID');
+      navigate('/admin/chapters');
+      return;
+    }
+
     try {
-      const response = await getChapterById(id);
-      if (response.success && response.data) {
-        const c = response.data;
-        setFormData({
-          chapter_number: c.chapter_number,
-          name: c.name,
-          title: c.title,
-          chapter_type: c.chapter_type,
-          thumbnail: c.thumbnail || '',
-          content: c.content || '',
-          status: c.status
-        });
-      } else {
-        alert('Chapter not found');
-        navigate('/admin/chapters');
-      }
-    } catch (err) {
+      setLoading(true);
+
+      const chapter = await adminApi.chapters.getById(id);
+
+      setFormData({
+        chapterNumber: chapter.chapterNumber,
+        title: chapter.title,
+        content: chapter.content
+      });
+
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Error loading chapter';
       console.error('Fetch error:', err);
-      alert('Error loading chapter');
+      alert(errorMessage);
+      navigate('/admin/chapters');
     } finally {
       setLoading(false);
     }
@@ -67,34 +63,43 @@ const ChapterEdit = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const finalValue = name === 'chapterNumber' ? parseInt(value) || 0 : value;
+    setFormData(prev => ({ ...prev, [name]: finalValue }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }));
   };
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Name required';
     if (!formData.title.trim()) newErrors.title = 'Title required';
+    if (!formData.content.trim()) newErrors.content = 'Content required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate() || !id) return;
 
     try {
       setSaving(true);
-      const response = await updateChapter(id, formData);
-      if (response.success) {
-        alert('Chapter updated!');
-        navigate('/admin/chapters');
-      } else {
-        alert('Failed to update');
-      }
-    } catch (err) {
+
+      const payload: UpdateChapterPayload = {
+        title: formData.title,
+        content: formData.content,
+        chapterNumber: formData.chapterNumber
+      };
+
+      await adminApi.chapters.update(id, payload);
+
+      alert('Chapter updated successfully!');
+      navigate('/admin/chapters');
+
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Failed to update chapter';
       console.error('Update error:', err);
-      alert('Error updating chapter');
+      alert(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -125,18 +130,10 @@ const ChapterEdit = () => {
           <div className={styles.formGrid}>
             <div className={styles.formGroup}>
               <label className={styles.label}>Chapter Number</label>
-              <input type="number" name="chapter_number" value={formData.chapter_number} onChange={handleChange} className={styles.input} min="1" placeholder="Enter chapter number" />
+              <input type="number" name="chapterNumber" value={formData.chapterNumber} onChange={handleChange} className={styles.input} min="1" placeholder="Enter chapter number" />
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.label}>
-                Name <span className={styles.required}>*</span>
-              </label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} className={styles.input} placeholder="e.g., முதல் அத்தியாயம்" />
-              {errors.name && <p className={styles.errorText}>{errors.name}</p>}
-            </div>
-
-            <div className={styles.formGroup}>
+            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
               <label className={styles.label}>
                 Title <span className={styles.required}>*</span>
               </label>
@@ -144,28 +141,13 @@ const ChapterEdit = () => {
               {errors.title && <p className={styles.errorText}>{errors.title}</p>}
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Type</label>
-              <select name="chapter_type" value={formData.chapter_type} onChange={handleChange} className={styles.select} aria-label="Select chapter type">
-                {CHAPTER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Status</label>
-              <select name="status" value={formData.status} onChange={handleChange} className={styles.select} aria-label="Select status">
-                {CHAPTER_STATUS.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
             <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-              <label className={styles.label}>Thumbnail URL</label>
-              <input type="text" name="thumbnail" value={formData.thumbnail} onChange={handleChange} className={styles.input} placeholder="Enter thumbnail URL" />
-            </div>
-
-            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-              <label className={styles.label}>Content</label>
-              <textarea name="content" value={formData.content} onChange={handleChange} className={styles.textarea} rows={10} placeholder="Enter chapter content" />
+              <label className={styles.label}>
+                Content <span className={styles.required}>*</span>
+              </label>
+              <textarea name="content" value={formData.content} onChange={handleChange} className={styles.textarea} rows={15} placeholder="Enter chapter content..." />
+              {errors.content && <p className={styles.errorText}>{errors.content}</p>}
+              <p className={styles.helpText}>Note: For production, integrate a rich text editor</p>
             </div>
           </div>
 

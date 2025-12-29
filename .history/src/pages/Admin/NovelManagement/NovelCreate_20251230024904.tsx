@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { adminApi, UpdateNovelPayload, NovelStatus } from '../../../api';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { adminApi, CreateNovelPayload, NovelStatus } from '../../../api';
 import styles from './NovelManagement.module.scss';
 
 const NOVEL_GENRES = ['Romance', 'Fantasy', 'Mystery', 'Thriller', 'Drama', 'Horror', 'Comedy', 'Action', 'SciFi'];
 const NOVEL_STATUS: NovelStatus[] = ['ONGOING', 'COMPLETED', 'HIATUS'];
 
-interface NovelEditFormData {
+interface NovelFormData {
   title: string;
   author: string;
   genre: string;
@@ -23,12 +23,10 @@ interface FormErrors {
   [key: string]: string | undefined;
 }
 
-const NovelEdit = () => {
-  const { id } = useParams<{ id: string }>();
+const NovelCreate = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [formData, setFormData] = useState<NovelEditFormData>({
+  const [loading, setLoading] = useState<boolean>(false);
+  const [formData, setFormData] = useState<NovelFormData>({
     title: '',
     author: '',
     genre: '',
@@ -37,52 +35,73 @@ const NovelEdit = () => {
     coverImage: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
-
-  useEffect(() => {
-    fetchNovel();
-  }, [id]);
-
-  const fetchNovel = async () => {
-    if (!id) {
-      alert('Invalid novel ID');
-      navigate('/admin/novels');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const novel = await adminApi.novels.getById(id);
-
-      setFormData({
-        title: novel.title || '',
-        author: novel.author || '',
-        genre: novel.genre || '',
-        description: novel.description || '',
-        status: novel.status || 'ONGOING',
-        coverImage: novel.coverImage || ''
-      });
-
-    } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'message' in err
-        ? String(err.message)
-        : 'Error loading novel';
-      console.error('Fetch novel error:', err);
-      alert(errorMessage);
-      navigate('/admin/novels');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
 
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  const processImageFile = (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setImagePreview(result);
+      setFormData(prev => ({ ...prev, coverImage: result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview('');
+    setFormData(prev => ({ ...prev, coverImage: '' }));
+  };
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -97,53 +116,42 @@ const NovelEdit = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate() || !id) return;
+    if (!validate()) return;
 
     try {
-      setSaving(true);
+      setLoading(true);
 
-      const payload: UpdateNovelPayload = {
+      const payload: CreateNovelPayload = {
         title: formData.title,
         author: formData.author,
         description: formData.description,
-        coverImage: formData.coverImage,
+        coverImage: formData.coverImage || 'https://via.placeholder.com/300x400',
         genre: formData.genre,
         status: formData.status
       };
 
-      await adminApi.novels.update(id, payload);
+      await adminApi.novels.create(payload);
 
-      alert('Novel updated successfully!');
+      alert('Novel created successfully!');
       navigate('/admin/novels');
 
     } catch (err: unknown) {
       const errorMessage = err && typeof err === 'object' && 'message' in err
         ? String(err.message)
-        : 'Failed to update novel';
-      console.error('Update novel error:', err);
+        : 'Failed to create novel';
+      console.error('Create novel error:', err);
       alert(errorMessage);
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p className={styles.loadingText}>Loading novel...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Edit Novel</h1>
-          <p className={styles.subtitle}>Update novel information</p>
+          <h1 className={styles.title}>Create New Novel</h1>
+          <p className={styles.subtitle}>Add a new novel to the platform</p>
         </div>
       </div>
 
@@ -198,6 +206,55 @@ const NovelEdit = () => {
               </select>
             </div>
 
+            {/* Cover Image Upload */}
+            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+              <label className={styles.label}>Cover Image</label>
+
+              {!imagePreview ? (
+                <div
+                  className={`${styles.imageUploadCard} ${isDragging ? styles.dragging : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className={styles.uploadIcon}>📁</div>
+                  <p className={styles.uploadText}>
+                    {isDragging ? 'Drop image here' : 'Drag and drop your image here'}
+                  </p>
+                  <p className={styles.uploadHint}>PNG, JPG, GIF up to 5MB</p>
+                  <div className={styles.uploadDivider}>
+                    <span>or</span>
+                  </div>
+                  <label
+                    htmlFor="coverImageInput"
+                    className={styles.uploadButton}
+                  >
+                    📤 Choose File
+                  </label>
+                  <input
+                    id="coverImageInput"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+              ) : (
+                <div className={styles.imagePreviewCard}>
+                  <img src={imagePreview} alt="Cover preview" className={styles.previewImage} />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className={styles.removeImageButton}
+                  >
+                    ✕ Remove
+                  </button>
+                </div>
+              )}
+
+              <p className={styles.helpText}>Optional: Upload a cover image for the novel</p>
+            </div>
+
             {/* Genre */}
             <div className={styles.formGroup}>
               <label className={styles.label}>
@@ -216,19 +273,6 @@ const NovelEdit = () => {
                 ))}
               </select>
               {errors.genre && <p className={styles.errorText}>{errors.genre}</p>}
-            </div>
-
-            {/* Cover Image URL */}
-            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-              <label className={styles.label}>Cover Image URL</label>
-              <input
-                type="text"
-                name="coverImage"
-                value={formData.coverImage}
-                onChange={handleChange}
-                placeholder="https://example.com/cover.jpg"
-                className={styles.input}
-              />
             </div>
 
             {/* Description */}
@@ -253,16 +297,16 @@ const NovelEdit = () => {
               type="button"
               onClick={() => navigate('/admin/novels')}
               className={styles.cancelButton}
-              disabled={saving}
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
               className={styles.submitButton}
-              disabled={saving}
+              disabled={loading}
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {loading ? 'Creating...' : 'Create Novel'}
             </button>
           </div>
         </div>
@@ -271,4 +315,4 @@ const NovelEdit = () => {
   );
 };
 
-export default NovelEdit;
+export default NovelCreate;

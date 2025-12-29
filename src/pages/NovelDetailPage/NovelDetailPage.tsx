@@ -1,14 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/layout/Header/Header';
 import TotalChaptersSection from '../../components/TotalChaptersSection/TotalChaptersSection';
 import UserLogin from '../../components/common/UserLogin/UserLogin';
 import styles from './NovelDetailPage.module.scss';
+import { publicApi, Novel, Chapter } from '../../api';
+
+interface ChapterCardData {
+  id: number;
+  chapterNumber: number;
+  title: string;
+  date: string;
+  readTime: string;
+  views: string;
+  image: string;
+  chapterUrl: string;
+}
 
 const NovelDetailPage: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  const [novel, setNovel] = useState<Novel | null>(null);
+  const [chapters, setChapters] = useState<ChapterCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNovelData = async () => {
+      if (!id) {
+        setError('Invalid novel ID');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [novelData, chaptersData] = await Promise.all([
+          publicApi.novels.getById(id),
+          publicApi.chapters.getAll({ novelId: id, page: 1, limit: 100 }),
+        ]);
+
+        setNovel(novelData);
+
+        const formattedChapters: ChapterCardData[] = chaptersData.items.map((chapter: Chapter) => ({
+          id: Number(chapter.id),
+          chapterNumber: chapter.chapterNumber,
+          title: chapter.title,
+          date: new Date(chapter.createdAt).toLocaleDateString('ta-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          }),
+          readTime: `${Math.ceil(chapter.content.length / 1000)} min read`,
+          views: '0 பார்வைகள்',
+          image: novelData.coverImage,
+          chapterUrl: `/novel/${id}/chapter/${chapter.id}`,
+        }));
+
+        setChapters(formattedChapters);
+
+      } catch (err: unknown) {
+        const errorMessage = err && typeof err === 'object' && 'message' in err
+          ? String(err.message)
+          : 'Failed to load novel details';
+        setError(errorMessage);
+        console.error('Error fetching novel:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNovelData();
+
+    return () => {
+      if (id) {
+        publicApi.novels.getById;
+        publicApi.chapters.getAll;
+      }
+    };
+  }, [id]);
 
   const handleLoginClick = () => {
     setIsLoginModalOpen(true);
@@ -19,7 +93,9 @@ const NovelDetailPage: React.FC = () => {
   };
 
   const handleStartReading = () => {
-    navigate(`/novel/${id}/chapter/1`);
+    if (chapters.length > 0) {
+      navigate(chapters[0].chapterUrl);
+    }
   };
 
   const handleLike = () => {
@@ -30,75 +106,65 @@ const NovelDetailPage: React.FC = () => {
     console.log('Bookmarked');
   };
 
-  // Sample data - replace with actual API data
-  const novelData = {
-    title: 'தாள்பாட்டும் தேவதை',
-    author: 'எழுதியவர் தென்மொழி',
-    status: 'ONGOING',
-    chapters: '45 அத்தியாயங்கள்',
-    views: '12,500 பார்வைகள்',
-    genre: 'Romance, Drama',
-    description: 'காதல், சோதனை, மற்றும் வெற்றியின் ஒரு அற்புதமான கதை',
-    coverImage: 'https://images.unsplash.com/photo-1529390079861-591de354faf5?w=600&h=800&fit=crop',
-  };
+  if (loading) {
+    return (
+      <div className={styles.novelDetailContainer}>
+        <Header onLoginClick={handleLoginClick} />
+        <div className={styles.loadingMessage}>
+          Loading novel details...
+        </div>
+      </div>
+    );
+  }
 
-  // Sample chapters data - 45 chapters
-  const chaptersData = Array.from({ length: 45 }, (_, index) => ({
-    id: index + 1,
-    chapterNumber: index + 1,
-    title: `அத்தியாயம் ${index + 1}`,
-    date: `${index + 1} ஜூன், 2024`,
-    readTime: `${10 + (index % 5)} min read`,
-    views: `${1000 + index * 100} பார்வைகள்`,
-    image: 'https://images.unsplash.com/photo-1529390079861-591de354faf5?w=200&h=280&fit=crop',
-    chapterUrl: `/novel/${id}/chapter/${index + 1}`,
-  }));
+  if (error || !novel) {
+    return (
+      <div className={styles.novelDetailContainer}>
+        <Header onLoginClick={handleLoginClick} />
+        <div className={styles.errorMessage}>
+          {error || 'Novel not found'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.novelDetailContainer}>
       <Header onLoginClick={handleLoginClick} />
 
-      {/* Novel Banner Section */}
       <section className={styles.novelBanner}>
         <div className={styles.bannerContent}>
-          {/* Left Side - Novel Cover Image */}
           <div className={styles.coverImageWrapper}>
             <img
-              src={novelData.coverImage}
-              alt={novelData.title}
+              src={novel.coverImage}
+              alt={novel.title}
               className={styles.coverImage}
             />
           </div>
 
-          {/* Right Side - Novel Information */}
           <div className={styles.novelInfo}>
-            {/* Novel Title */}
-            <h1 className={styles.novelTitle}>{novelData.title}</h1>
+            <h1 className={styles.novelTitle}>{novel.title}</h1>
 
-            {/* Author Name */}
-            <p className={styles.authorName}>{novelData.author}</p>
+            <p className={styles.authorName}>எழுதியவர் {novel.author}</p>
 
-            {/* Status and Stats */}
             <div className={styles.statsRow}>
-              <span className={styles.statusBadge}>{novelData.status}</span>
-              <span className={styles.statItem}>{novelData.chapters}</span>
-              <span className={styles.statItem}>{novelData.views}</span>
-              <span className={styles.statItem}>{novelData.genre}</span>
+              <span className={styles.statusBadge}>{novel.status}</span>
+              <span className={styles.statItem}>{novel.totalChapters} அத்தியாயங்கள்</span>
+              <span className={styles.statItem}>{novel.totalViews.toLocaleString()} பார்வைகள்</span>
+              <span className={styles.statItem}>{novel.genre}</span>
             </div>
 
-            {/* Description */}
-            <p className={styles.description}>{novelData.description}</p>
+            <p className={styles.description}>{novel.description}</p>
 
-            {/* Action Buttons */}
             <div className={styles.actionButtons}>
-              <button className={styles.startReadingBtn} onClick={handleStartReading}>
+              <button type="button" className={styles.startReadingBtn} onClick={handleStartReading}>
                 <span className={styles.playIcon}>▶</span>
                 Read Now
               </button>
-              <button className={styles.likeBtn} onClick={handleLike}>
+              <button type="button" className={styles.likeBtn} onClick={handleLike}>
                 <span className={styles.icon}>👍</span>
               </button>
-              <button className={styles.bookmarkBtn} onClick={handleBookmark}>
+              <button type="button" className={styles.bookmarkBtn} onClick={handleBookmark}>
                 <span className={styles.icon}>+</span>
               </button>
             </div>
@@ -106,13 +172,11 @@ const NovelDetailPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Total Chapters Section */}
       <TotalChaptersSection
-        totalChapters={45}
-        chapters={chaptersData}
+        totalChapters={novel.totalChapters}
+        chapters={chapters}
       />
 
-      {/* User Login Modal */}
       <UserLogin isOpen={isLoginModalOpen} onClose={handleCloseLogin} />
     </div>
   );

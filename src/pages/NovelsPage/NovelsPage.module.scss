@@ -25,6 +25,22 @@
   }
 }
 
+// Loading State
+.loadingMessage {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+// Error State
+.errorMessage {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #ff6b6b;
+  font-size: 1.2rem;
+}
+
 // New Banner Section
 .bannerBelowHome {
   width: 100%;

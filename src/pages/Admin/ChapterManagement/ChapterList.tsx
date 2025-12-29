@@ -1,29 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getChaptersByNovel, deleteChapter, getAllNovelsAdmin } from '../../../services/API/adminMockService';
+import { adminApi, Novel, Chapter } from '../../../api';
 import DataTable from '../../../components/admin/DataTable/DataTable';
 import styles from './ChapterManagement.module.scss';
 
-/**
- * ChapterList Component
- * Display and manage chapters for a selected novel
- * INTEGRATION: Replace API calls with real endpoints
- */
-
-interface NovelData {
-  id: string | number;
-  title: string;
-  [key: string]: any;
+interface NovelData extends Novel {
+  [key: string]: unknown;
 }
 
-interface ChapterData {
-  id: string | number;
-  chapter_number: number;
-  name: string;
-  title: string;
-  chapter_type: string;
-  status: string;
-  [key: string]: any;
+interface ChapterData extends Chapter {
+  [key: string]: unknown;
 }
 
 const ChapterList = () => {
@@ -58,12 +44,14 @@ const ChapterList = () => {
 
   const fetchNovels = async () => {
     try {
-      const response = await getAllNovelsAdmin();
-      if (response.success) {
-        setNovels(response.data.novels);
-      }
-    } catch (err) {
+      const response = await adminApi.novels.getAll({ page: 1, limit: 100 });
+      setNovels(response.items as NovelData[]);
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Failed to load novels';
       console.error('Fetch novels error:', err);
+      setError(errorMessage);
     }
   };
 
@@ -71,15 +59,21 @@ const ChapterList = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getChaptersByNovel(selectedNovelId);
-      if (response.success) {
-        setChapters(response.data.chapters);
-      } else {
-        setError('Failed to load chapters');
-      }
-    } catch (err) {
+
+      const response = await adminApi.chapters.getAll({
+        novelId: selectedNovelId,
+        page: 1,
+        limit: 100
+      });
+
+      setChapters(response.items as ChapterData[]);
+
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Failed to load chapters';
       console.error('Fetch chapters error:', err);
-      setError('An error occurred while loading chapters');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -92,37 +86,37 @@ const ChapterList = () => {
 
   const handleDelete = async (chapter: ChapterData) => {
     if (!window.confirm(`Delete chapter "${chapter.title}"?`)) return;
+
     try {
-      const response = await deleteChapter(chapter.id);
-      if (response.success) {
-        fetchChapters();
-        alert('Chapter deleted');
-      }
-    } catch (err) {
+      await adminApi.chapters.delete(String(chapter.id));
+      fetchChapters();
+      alert('Chapter deleted successfully');
+
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Failed to delete chapter';
       console.error('Delete error:', err);
-      alert('Failed to delete chapter');
+      alert(errorMessage);
     }
   };
 
   const columns = [
     {
-      key: 'chapter_number',
+      key: 'chapterNumber',
       label: '#',
-      render: (value: any) => <span className={styles.chapterNum}>{value}</span>
+      render: (value: unknown) => <span className={styles.chapterNum}>{String(value)}</span>
     },
-    { key: 'name', label: 'Name' },
     { key: 'title', label: 'Title' },
     {
-      key: 'chapter_type',
-      label: 'Type',
-      render: (value: any) => <span className={styles.typeBadge}>{value}</span>
+      key: 'createdAt',
+      label: 'Created',
+      render: (value: unknown) => new Date(String(value)).toLocaleDateString()
     },
     {
-      key: 'status',
-      label: 'Status',
-      render: (value: any) => (
-        <span className={`${styles.statusBadge} ${styles[value?.toLowerCase()]}`}>{value}</span>
-      )
+      key: 'updatedAt',
+      label: 'Updated',
+      render: (value: unknown) => new Date(String(value)).toLocaleDateString()
     }
   ];
 
@@ -150,6 +144,7 @@ const ChapterList = () => {
 
         {selectedNovelId && (
           <button
+            type="button"
             className={styles.createButton}
             onClick={() => navigate(`/admin/chapters/create?novelId=${selectedNovelId}`)}
           >
@@ -169,18 +164,20 @@ const ChapterList = () => {
             columns={columns}
             data={chapters}
             emptyMessage="No chapters found. Add your first chapter!"
-            actions={(chapter: any) => (
+            actions={(chapter: unknown) => (
               <>
                 <button
+                  type="button"
                   className={`${styles.actionButton} ${styles.edit}`}
-                  onClick={() => navigate(`/admin/chapters/edit/${chapter.id}`)}
+                  onClick={() => navigate(`/admin/chapters/edit/${(chapter as ChapterData).id}`)}
                   title="Edit"
                 >
                   ✏️
                 </button>
                 <button
+                  type="button"
                   className={`${styles.actionButton} ${styles.delete}`}
-                  onClick={() => handleDelete(chapter)}
+                  onClick={() => handleDelete(chapter as ChapterData)}
                   title="Delete"
                 >
                   🗑️

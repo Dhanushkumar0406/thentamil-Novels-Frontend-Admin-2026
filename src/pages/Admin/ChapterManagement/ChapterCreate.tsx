@@ -1,31 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createChapter, getAllNovelsAdmin, CHAPTER_TYPES, CHAPTER_STATUS } from '../../../services/API/adminMockService';
+import { adminApi, CreateChapterPayload, Novel } from '../../../api';
 import styles from '../NovelManagement/NovelManagement.module.scss';
 
 interface ChapterFormData {
-  novel_id: string;
-  chapter_number: number;
-  name: string;
+  novelId: string;
+  chapterNumber: number;
   title: string;
-  chapter_type: string;
-  thumbnail: string;
   content: string;
-  status: string;
 }
 
 interface FormErrors {
-  novel_id?: string;
-  chapter_number?: string;
-  name?: string;
+  novelId?: string;
+  chapterNumber?: string;
   title?: string;
+  content?: string;
   [key: string]: string | undefined;
 }
 
-interface NovelData {
-  id: string | number;
-  title: string;
-  [key: string]: any;
+interface NovelData extends Novel {
+  [key: string]: unknown;
 }
 
 const ChapterCreate = () => {
@@ -36,14 +30,10 @@ const ChapterCreate = () => {
   const [novels, setNovels] = useState<NovelData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState<ChapterFormData>({
-    novel_id: novelIdParam || '',
-    chapter_number: 1,
-    name: '',
+    novelId: novelIdParam || '',
+    chapterNumber: 1,
     title: '',
-    chapter_type: 'Regular',
-    thumbnail: '',
-    content: '',
-    status: 'Draft'
+    content: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -53,27 +43,27 @@ const ChapterCreate = () => {
 
   const fetchNovels = async () => {
     try {
-      const response = await getAllNovelsAdmin();
-      if (response.success) setNovels(response.data.novels);
-    } catch (err) {
+      const response = await adminApi.novels.getAll({ page: 1, limit: 100 });
+      setNovels(response.items as NovelData[]);
+    } catch (err: unknown) {
       console.error('Fetch novels error:', err);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    // Convert chapter_number to number
-    const finalValue = name === 'chapter_number' ? parseInt(value) || 0 : value;
+    // Convert chapterNumber to number
+    const finalValue = name === 'chapterNumber' ? parseInt(value) || 0 : value;
     setFormData(prev => ({ ...prev, [name]: finalValue }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }));
   };
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-    if (!formData.novel_id) newErrors.novel_id = 'Select a novel';
-    if (!formData.chapter_number) newErrors.chapter_number = 'Chapter number required';
-    if (!formData.name.trim()) newErrors.name = 'Name required';
+    if (!formData.novelId) newErrors.novelId = 'Select a novel';
+    if (!formData.chapterNumber) newErrors.chapterNumber = 'Chapter number required';
     if (!formData.title.trim()) newErrors.title = 'Title required';
+    if (!formData.content.trim()) newErrors.content = 'Content required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -84,16 +74,25 @@ const ChapterCreate = () => {
 
     try {
       setLoading(true);
-      const response = await createChapter(formData.novel_id, formData);
-      if (response.success) {
-        alert('Chapter created!');
-        navigate(`/admin/chapters?novelId=${formData.novel_id}`);
-      } else {
-        alert('Failed to create chapter');
-      }
-    } catch (err) {
+
+      const payload: CreateChapterPayload = {
+        novelId: formData.novelId,
+        title: formData.title,
+        content: formData.content,
+        chapterNumber: formData.chapterNumber
+      };
+
+      await adminApi.chapters.create(payload);
+
+      alert('Chapter created successfully!');
+      navigate(`/admin/chapters?novelId=${formData.novelId}`);
+
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Failed to create chapter';
       console.error('Create error:', err);
-      alert('Error creating chapter');
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -115,30 +114,22 @@ const ChapterCreate = () => {
               <label className={styles.label}>
                 Novel <span className={styles.required}>*</span>
               </label>
-              <select name="novel_id" value={formData.novel_id} onChange={handleChange} className={styles.select} aria-label="Select novel">
+              <select name="novelId" value={formData.novelId} onChange={handleChange} className={styles.select} aria-label="Select novel">
                 <option value="">Select novel...</option>
                 {novels.map(n => <option key={n.id} value={n.id}>{n.title}</option>)}
               </select>
-              {errors.novel_id && <p className={styles.errorText}>{errors.novel_id}</p>}
+              {errors.novelId && <p className={styles.errorText}>{errors.novelId}</p>}
             </div>
 
             <div className={styles.formGroup}>
               <label className={styles.label}>
                 Chapter Number <span className={styles.required}>*</span>
               </label>
-              <input type="number" name="chapter_number" value={formData.chapter_number} onChange={handleChange} className={styles.input} min="1" placeholder="Enter chapter number" />
-              {errors.chapter_number && <p className={styles.errorText}>{errors.chapter_number}</p>}
+              <input type="number" name="chapterNumber" value={formData.chapterNumber} onChange={handleChange} className={styles.input} min="1" placeholder="Enter chapter number" />
+              {errors.chapterNumber && <p className={styles.errorText}>{errors.chapterNumber}</p>}
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.label}>
-                Name <span className={styles.required}>*</span>
-              </label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., முதல் அத்தியாயம்" className={styles.input} />
-              {errors.name && <p className={styles.errorText}>{errors.name}</p>}
-            </div>
-
-            <div className={styles.formGroup}>
+            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
               <label className={styles.label}>
                 Title <span className={styles.required}>*</span>
               </label>
@@ -146,28 +137,12 @@ const ChapterCreate = () => {
               {errors.title && <p className={styles.errorText}>{errors.title}</p>}
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Type</label>
-              <select name="chapter_type" value={formData.chapter_type} onChange={handleChange} className={styles.select} aria-label="Select chapter type">
-                {CHAPTER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Status</label>
-              <select name="status" value={formData.status} onChange={handleChange} className={styles.select} aria-label="Select status">
-                {CHAPTER_STATUS.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
             <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-              <label className={styles.label}>Thumbnail URL</label>
-              <input type="text" name="thumbnail" value={formData.thumbnail} onChange={handleChange} placeholder="https://..." className={styles.input} />
-            </div>
-
-            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-              <label className={styles.label}>Content</label>
-              <textarea name="content" value={formData.content} onChange={handleChange} placeholder="Chapter content (rich text placeholder)" className={styles.textarea} rows={10} />
+              <label className={styles.label}>
+                Content <span className={styles.required}>*</span>
+              </label>
+              <textarea name="content" value={formData.content} onChange={handleChange} placeholder="Enter chapter content..." className={styles.textarea} rows={15} />
+              {errors.content && <p className={styles.errorText}>{errors.content}</p>}
               <p className={styles.helpText}>Note: For production, integrate a rich text editor</p>
             </div>
           </div>

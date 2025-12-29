@@ -1,33 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllNovelsAdmin, deleteNovel } from '../../../services/API/adminMockService';
+import { adminApi, Novel } from '../../../api';
 import DataTable from '../../../components/admin/DataTable/DataTable';
 import styles from './NovelManagement.module.scss';
 
-/**
- * NovelList Component
- *
- * Displays a table of all novels with:
- * - Search functionality
- * - Status filter
- * - Edit/Delete actions
- * - Create new novel button
- *
- * INTEGRATION POINTS:
- * - Replace getAllNovelsAdmin() with real API endpoint
- * - Replace deleteNovel() with real API endpoint
- * - Implement pagination when backend supports it
- */
-
-interface NovelData {
-  id: string | number;
-  title: string;
-  author_name: string;
-  categories: string[];
-  total_chapters: number;
-  status: string;
-  updated_at: string;
-  [key: string]: any;
+interface NovelData extends Novel {
+  [key: string]: unknown;
 }
 
 const NovelList = () => {
@@ -47,20 +25,21 @@ const NovelList = () => {
       setLoading(true);
       setError(null);
 
-      // TODO: Replace with real API call
-      const response = await getAllNovelsAdmin({
+      const response = await adminApi.novels.getAll({
         search: searchQuery,
-        status: statusFilter
+        status: statusFilter as 'ONGOING' | 'COMPLETED' | 'HIATUS' | '',
+        page: 1,
+        limit: 100
       });
 
-      if (response.success) {
-        setNovels(response.data.novels);
-      } else {
-        setError('Failed to load novels');
-      }
-    } catch (err) {
+      setNovels(response.items as NovelData[]);
+
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Failed to load novels';
       console.error('Fetch novels error:', err);
-      setError('An error occurred while loading novels');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -77,19 +56,18 @@ const NovelList = () => {
     }
 
     try {
-      // TODO: Replace with real API call
-      const response = await deleteNovel(novel.id);
+      await adminApi.novels.delete(String(novel.id));
 
-      if (response.success) {
-        // Refresh the list
-        fetchNovels();
-        alert('Novel deleted successfully');
-      } else {
-        alert('Failed to delete novel');
-      }
-    } catch (err) {
+      // Refresh the list
+      fetchNovels();
+      alert('Novel deleted successfully');
+
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String(err.message)
+        : 'Failed to delete novel';
       console.error('Delete novel error:', err);
-      alert('An error occurred while deleting the novel');
+      alert(errorMessage);
     }
   };
 
@@ -102,46 +80,39 @@ const NovelList = () => {
     {
       key: 'title',
       label: 'Title',
-      render: (value: any) => <span className={styles.novelTitle}>{value}</span>
+      render: (value: unknown) => <span className={styles.novelTitle}>{String(value)}</span>
     },
     {
-      key: 'author_name',
+      key: 'author',
       label: 'Author'
     },
     {
-      key: 'categories',
-      label: 'Categories',
-      render: (value: any) => (
-        <div className={styles.categories}>
-          {value?.slice(0, 2).map((cat: any, index: any) => (
-            <span key={index} className={styles.categoryBadge}>
-              {cat}
-            </span>
-          ))}
-          {value?.length > 2 && (
-            <span className={styles.categoryBadge}>+{value.length - 2}</span>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'total_chapters',
-      label: 'Chapters',
-      render: (value: any) => <span className={styles.chapterCount}>{value || 0}</span>
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value: any) => (
-        <span className={`${styles.statusBadge} ${styles[value?.toLowerCase()]}`}>
-          {value}
+      key: 'genre',
+      label: 'Genre',
+      render: (value: unknown) => (
+        <span className={styles.categoryBadge}>
+          {String(value)}
         </span>
       )
     },
     {
-      key: 'updated_at',
+      key: 'totalChapters',
+      label: 'Chapters',
+      render: (value: unknown) => <span className={styles.chapterCount}>{value || 0}</span>
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (value: unknown) => (
+        <span className={`${styles.statusBadge} ${styles[String(value)?.toLowerCase()]}`}>
+          {String(value)}
+        </span>
+      )
+    },
+    {
+      key: 'updatedAt',
       label: 'Last Updated',
-      render: (value: any) => new Date(value).toLocaleDateString()
+      render: (value: unknown) => new Date(String(value)).toLocaleDateString()
     }
   ];
 
@@ -168,6 +139,7 @@ const NovelList = () => {
           </p>
         </div>
         <button
+          type="button"
           className={styles.createButton}
           onClick={() => navigate('/admin/novels/create')}
         >
@@ -196,12 +168,13 @@ const NovelList = () => {
           aria-label="Filter by status"
         >
           <option value="">All Status</option>
-          <option value="Published">Published</option>
-          <option value="Draft">Draft</option>
-          <option value="Archived">Archived</option>
+          <option value="ONGOING">Ongoing</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="HIATUS">Hiatus</option>
         </select>
 
         <button
+          type="button"
           className={styles.refreshButton}
           onClick={fetchNovels}
           title="Refresh"
@@ -215,7 +188,7 @@ const NovelList = () => {
         <div className={styles.errorBanner}>
           <span className={styles.errorIcon}>⚠️</span>
           <span>{error}</span>
-          <button onClick={fetchNovels} className={styles.retryLink}>
+          <button type="button" onClick={fetchNovels} className={styles.retryLink}>
             Retry
           </button>
         </div>
@@ -226,25 +199,28 @@ const NovelList = () => {
         columns={columns}
         data={novels}
         emptyMessage="No novels found. Create your first novel to get started!"
-        actions={(novel: any) => (
+        actions={(novel: unknown) => (
           <>
             <button
+              type="button"
               className={`${styles.actionButton} ${styles.view}`}
-              onClick={() => handleViewChapters(novel)}
+              onClick={() => handleViewChapters(novel as NovelData)}
               title="View Chapters"
             >
               📖
             </button>
             <button
+              type="button"
               className={`${styles.actionButton} ${styles.edit}`}
-              onClick={() => handleEdit(novel)}
+              onClick={() => handleEdit(novel as NovelData)}
               title="Edit"
             >
               ✏️
             </button>
             <button
+              type="button"
               className={`${styles.actionButton} ${styles.delete}`}
-              onClick={() => handleDelete(novel)}
+              onClick={() => handleDelete(novel as NovelData)}
               title="Delete"
             >
               🗑️
