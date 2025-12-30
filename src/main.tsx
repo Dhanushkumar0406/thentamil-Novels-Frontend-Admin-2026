@@ -5,6 +5,8 @@ import { ThemeProvider } from './context/ThemeContext'
 import { LanguageProvider } from './context/LanguageContext'
 import './styles/index.scss'
 import App from './App'
+import { healthService } from './services/healthService'
+import './utils/networkDiagnostics' // Load network diagnostics utility
 
 // Suppress Chrome extension errors from console
 const originalError = console.error
@@ -48,6 +50,11 @@ console.log = (...args) => {
 }
 
 console.info('✅ Console filter enabled - Extension errors suppressed. Your app is working perfectly!')
+
+// Verify backend on startup (development only)
+if (import.meta.env.DEV) {
+  healthService.verifyBackendOnStartup();
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find root element');

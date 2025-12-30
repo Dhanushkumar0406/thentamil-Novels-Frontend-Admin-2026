@@ -1,5 +1,7 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+// DEPRECATED: Use src/api/apiClient.ts instead
+console.warn('⚠️ Using legacy API config. Migrate to src/api/apiClient.ts');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 export const API_ENDPOINTS = {
   // Authentication

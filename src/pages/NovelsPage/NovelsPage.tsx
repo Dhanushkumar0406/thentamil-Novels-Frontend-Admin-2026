@@ -34,6 +34,8 @@ const NovelsPage = () => {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchNovels = async () => {
       try {
         setLoading(true);
@@ -43,6 +45,9 @@ const NovelsPage = () => {
           publicApi.novels.getAll({ status: 'ONGOING', page: 1, limit: 6 }),
           publicApi.novels.getAll({ status: 'COMPLETED', page: 1, limit: 5 }),
         ]);
+
+        // Only update state if component is still mounted
+        if (!isMounted) return;
 
         const mapNovelToCard = (novel: Novel): NovelCardData => ({
           id: Number(novel.id),
@@ -59,20 +64,26 @@ const NovelsPage = () => {
         setContinueReadingNovels(continueReading);
 
       } catch (err: unknown) {
+        // Only update error state if component is still mounted
+        if (!isMounted) return;
+
         const errorMessage = err && typeof err === 'object' && 'message' in err
           ? String(err.message)
           : 'Failed to load novels';
         setError(errorMessage);
         console.error('Error fetching novels:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchNovels();
 
+    // Cleanup function to prevent state updates after unmount
     return () => {
-      publicApi.novels.getAll;
+      isMounted = false;
     };
   }, []);
 

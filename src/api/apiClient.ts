@@ -19,6 +19,9 @@ class ApiClient {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
     });
 
@@ -35,11 +38,14 @@ class ApiClient {
 
         // Log API requests in development
         if (ENV.IS_DEVELOPMENT) {
-          console.log('API Request:', {
+          const timestamp = new Date().toISOString();
+          console.log(`📤 [${timestamp}] API Request:`, {
             method: config.method?.toUpperCase(),
-            url: config.url,
+            endpoint: config.url,
             fullUrl: `${config.baseURL}${config.url}`,
-            headers: config.headers,
+            hasAuth: !!config.headers.Authorization,
+            params: config.params,
+            dataSize: config.data ? JSON.stringify(config.data).length : 0,
           });
         }
 
@@ -52,6 +58,18 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response) => {
+        // Log successful responses in development
+        if (ENV.IS_DEVELOPMENT && response.config) {
+          const timestamp = new Date().toISOString();
+          console.log(`📥 [${timestamp}] API Response:`, {
+            method: response.config.method?.toUpperCase(),
+            endpoint: response.config.url,
+            status: response.status,
+            statusText: response.statusText,
+            dataSize: response.data ? JSON.stringify(response.data).length : 0,
+          });
+        }
+
         return response;
       },
       (error: AxiosError<ApiResponse>) => {
@@ -101,16 +119,34 @@ class ApiClient {
 
         if (!error.response) {
           // Enhanced network error logging
-          console.error('Network Error Details:', {
+          console.error('\n' + '❌'.repeat(30));
+          console.error('🚨 NETWORK ERROR DETECTED');
+          console.error('❌'.repeat(30));
+          console.error('Error Details:', {
+            timestamp: new Date().toISOString(),
             message: error.message,
             code: error.code,
-            config: {
-              url: error.config?.url,
-              method: error.config?.method,
-              baseURL: error.config?.baseURL,
-            },
-            stack: error.stack,
+            errno: (error as any).errno,
+            syscall: (error as any).syscall,
           });
+          console.error('Request Details:', {
+            method: error.config?.method?.toUpperCase(),
+            url: error.config?.url,
+            baseURL: error.config?.baseURL,
+            fullURL: (error.config?.baseURL || '') + (error.config?.url || ''),
+            timeout: error.config?.timeout,
+          });
+          console.error('Backend Configuration:', {
+            expectedBackend: ENV.API_BASE_URL,
+            backendPort: new URL(ENV.API_BASE_URL).port,
+            frontendPort: window.location.port || '80',
+          });
+          console.error('Troubleshooting:');
+          console.error('  1. Verify backend is running: http://localhost:4000/health');
+          console.error('  2. Check backend console for startup messages');
+          console.error('  3. Verify CORS configuration matches frontend origin');
+          console.error('  4. Check firewall/antivirus settings');
+          console.error('❌'.repeat(30) + '\n');
 
           // Determine specific error type
           let errorMessage = 'Network error. Please check your connection.';
@@ -172,7 +208,7 @@ class ApiClient {
   }
 
   public async get<T>(url: string, params?: unknown, abortKey?: string): Promise<T> {
-    const response = await this.client.get<ApiResponse<T>>(url, {
+    const response = await this.client.get<T>(url, {
       params,
       signal: this.getAbortSignal(abortKey),
     });
@@ -181,11 +217,26 @@ class ApiClient {
       this.abortControllers.delete(abortKey);
     }
 
-    return response.data.data as T;
+    // Validate response exists
+    if (!response.data || typeof response.data !== 'object') {
+      if (ENV.IS_DEVELOPMENT) {
+        console.error('Invalid API response structure:', {
+          status: response.status,
+          data: response.data,
+          url,
+        });
+      }
+      throw {
+        status: response.status || 500,
+        message: 'Invalid response format from server',
+      };
+    }
+
+    return response.data as T;
   }
 
   public async post<T>(url: string, data?: unknown, abortKey?: string): Promise<T> {
-    const response = await this.client.post<ApiResponse<T>>(url, data, {
+    const response = await this.client.post<T>(url, data, {
       signal: this.getAbortSignal(abortKey),
     });
 
@@ -193,11 +244,18 @@ class ApiClient {
       this.abortControllers.delete(abortKey);
     }
 
-    return response.data.data as T;
+    if (!response.data || typeof response.data !== 'object') {
+      throw {
+        status: response.status || 500,
+        message: 'Invalid response format from server',
+      };
+    }
+
+    return response.data as T;
   }
 
   public async patch<T>(url: string, data?: unknown, abortKey?: string): Promise<T> {
-    const response = await this.client.patch<ApiResponse<T>>(url, data, {
+    const response = await this.client.patch<T>(url, data, {
       signal: this.getAbortSignal(abortKey),
     });
 
@@ -205,11 +263,18 @@ class ApiClient {
       this.abortControllers.delete(abortKey);
     }
 
-    return response.data.data as T;
+    if (!response.data || typeof response.data !== 'object') {
+      throw {
+        status: response.status || 500,
+        message: 'Invalid response format from server',
+      };
+    }
+
+    return response.data as T;
   }
 
   public async delete<T>(url: string, abortKey?: string): Promise<T> {
-    const response = await this.client.delete<ApiResponse<T>>(url, {
+    const response = await this.client.delete<T>(url, {
       signal: this.getAbortSignal(abortKey),
     });
 
@@ -217,7 +282,14 @@ class ApiClient {
       this.abortControllers.delete(abortKey);
     }
 
-    return response.data.data as T;
+    if (!response.data || typeof response.data !== 'object') {
+      throw {
+        status: response.status || 500,
+        message: 'Invalid response format from server',
+      };
+    }
+
+    return response.data as T;
   }
 }
 
