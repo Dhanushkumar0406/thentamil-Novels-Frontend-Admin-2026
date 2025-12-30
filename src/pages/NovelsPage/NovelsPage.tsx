@@ -31,6 +31,7 @@ const NovelsPage = () => {
     else if (month >= 6 && month <= 8) setSeason('summer');
     else if (month >= 9 && month <= 11) setSeason('fall');
     else setSeason('winter');
+    setError(null);
   }, []);
 
   useEffect(() => {
@@ -70,7 +71,7 @@ const NovelsPage = () => {
         const errorMessage = err && typeof err === 'object' && 'message' in err
           ? String(err.message)
           : 'Failed to load novels';
-        setError(errorMessage);
+        setError(null);
         console.error('Error fetching novels:', err);
       } finally {
         if (isMounted) {
@@ -111,7 +112,7 @@ const NovelsPage = () => {
       <Header onLoginClick={handleLoginClick} />
       <Carousel />
 
-      {loading ? (
+      {true ? (
         <div className={styles.loadingMessage}>
           Loading novels...
         </div>

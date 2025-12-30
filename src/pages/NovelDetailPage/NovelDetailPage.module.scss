@@ -22,7 +22,7 @@
 .errorMessage {
   text-align: center;
   padding: 4rem 2rem;
-  color: #ff6b6b;
+  color: #000000;
   font-size: 1.2rem;
 }
 
@@ -286,6 +286,7 @@
   border-radius: 50%;
   cursor: pointer;
   transition: all var(--transition-fast);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 
   &:hover {

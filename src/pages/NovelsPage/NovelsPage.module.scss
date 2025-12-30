@@ -542,10 +542,6 @@
     }
   }
 
-  // Firefox
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.1);
-
   display: flex;
 
   .continueReadingCard {
@@ -557,6 +553,7 @@
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 2px solid var(--color-surface);
     box-shadow: var(--shadow-lg);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 
     &:hover {
@@ -786,6 +783,7 @@
   background: transparent;
   border: none;
   border-radius: 0;
+  -webkit-backdrop-filter: none;
   backdrop-filter: none;
   overflow: visible;
 }
@@ -813,6 +811,7 @@
   // Remove all the previous glass effects and complex styling
   border: none;
   box-shadow: none;
+  -webkit-backdrop-filter: none;
   backdrop-filter: none;
 
   &::before {

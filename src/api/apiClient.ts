@@ -149,7 +149,7 @@ class ApiClient {
           console.error('❌'.repeat(30) + '\n');
 
           // Determine specific error type
-          let errorMessage = 'Network error. Please check your connection.';
+          let errorMessage = 'Network error. Please check your ection.';
           let errorStatus = 0;
 
           if (error.code === 'ECONNREFUSED') {
