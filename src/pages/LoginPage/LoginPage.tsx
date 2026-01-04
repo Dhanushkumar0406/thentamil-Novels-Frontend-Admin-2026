@@ -29,13 +29,27 @@ const LoginPage: React.FC = () => {
     setError('');
 
     try {
+      console.log('🔐 Login attempt with:', formData.email);
       const result = await login({ email: formData.email, password: formData.password });
+      console.log('📥 Login result:', result);
+
       if (result.success) {
-        navigate('/');
+        // Redirect based on user role
+        const userRole = result.data?.user?.role;
+        console.log('👤 User role:', userRole);
+        console.log('📍 Navigating to:', userRole === 'ADMIN' || userRole === 'EDITOR' ? '/admin/dashboard' : '/');
+
+        if (userRole === 'ADMIN' || userRole === 'EDITOR') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
       } else {
+        console.error('❌ Login failed:', result.error);
         setError(result.error || 'Login failed. Please try again.');
       }
     } catch (err: any) {
+      console.error('❌ Login error:', err);
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);

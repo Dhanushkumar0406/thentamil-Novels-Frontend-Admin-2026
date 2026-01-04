@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense, Component, ErrorInfo, ReactNode, memo } from 'react';
 import './routes.scss';
 
@@ -96,6 +96,9 @@ const AppRoutes = () => {
             </RoleProtectedRoute>
           }
         >
+          {/* Default redirect to dashboard */}
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+
           {/* Dashboard */}
           <Route path="dashboard" element={<AdminDashboard />} />
 

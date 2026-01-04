@@ -17,14 +17,16 @@ const AdminDashboard = () => {
       setLoading(true);
       setError(null);
 
+      console.log('📊 Fetching dashboard stats...');
       const data = await adminApi.dashboard.getStats();
+      console.log('✅ Dashboard stats received:', data);
       setStats(data);
 
     } catch (err: unknown) {
       const errorMessage = err && typeof err === 'object' && 'message' in err
         ? String(err.message)
         : 'Failed to load dashboard statistics';
-      console.error('Dashboard stats error:', err);
+      console.error('❌ Dashboard stats error:', err);
       setError(errorMessage);
     } finally {
       setLoading(false);

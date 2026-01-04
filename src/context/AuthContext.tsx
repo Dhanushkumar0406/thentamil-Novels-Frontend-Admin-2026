@@ -6,20 +6,27 @@ import { AuthContextType, User } from '../types';
 const MOCK_USERS = [
   {
     id: 1,
+    email: 'admin@theantamil.com',
+    password: 'password123',
+    role: 'ADMIN',
+    name: 'Admin User'
+  },
+  {
+    id: 2,
     email: 'admin@example.com',
     password: 'admin123',
     role: 'ADMIN',
     name: 'Admin User'
   },
   {
-    id: 2,
+    id: 3,
     email: 'editor@example.com',
     password: 'editor123',
     role: 'EDITOR',
     name: 'Editor User'
   },
   {
-    id: 3,
+    id: 4,
     email: 'user@example.com',
     password: 'user123',
     role: 'USER',

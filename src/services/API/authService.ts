@@ -7,20 +7,27 @@ import { API_ENDPOINTS } from './config';
 const MOCK_USERS = [
   {
     id: 1,
+    email: 'admin@theantamil.com',
+    password: 'password123',
+    role: 'ADMIN',
+    name: 'Admin User'
+  },
+  {
+    id: 2,
     email: 'admin@example.com',
     password: 'admin123',
     role: 'ADMIN',
     name: 'Admin User'
   },
   {
-    id: 2,
+    id: 3,
     email: 'editor@example.com',
     password: 'editor123',
     role: 'EDITOR',
     name: 'Editor User'
   },
   {
-    id: 3,
+    id: 4,
     email: 'user@example.com',
     password: 'user123',
     role: 'USER',
@@ -69,20 +76,64 @@ const mockLogin = async (credentials) => {
   };
 };
 
+// Helper function to decode JWT and extract user info
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Failed to decode JWT:', error);
+    return null;
+  }
+};
+
 export const authService = {
   // Login
   login: async (credentials) => {
     // Try real API first
     try {
       const response = await apiClient.post(API_ENDPOINTS.LOGIN, credentials);
-      const { token, refreshToken, user } = response.data;
 
-      // Store tokens and user data
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('refreshToken', refreshToken);
+      // Backend returns { access_token: "..." }
+      const { access_token } = response.data;
+
+      if (!access_token) {
+        throw new Error('No access token received from server');
+      }
+
+      // Decode JWT to get user information
+      const decodedToken = decodeJWT(access_token);
+
+      if (!decodedToken) {
+        throw new Error('Failed to decode token');
+      }
+
+      // Extract user data from JWT payload
+      const user = {
+        id: decodedToken.id,
+        email: decodedToken.email,
+        role: decodedToken.role,
+        name: decodedToken.full_name || decodedToken.email.split('@')[0]
+      };
+
+      // Store token and user data
+      localStorage.setItem('authToken', access_token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      return { success: true, data: response.data };
+      return {
+        success: true,
+        data: {
+          token: access_token,
+          user: user
+        }
+      };
     } catch (error) {
       // If backend is not available, use mock login
       console.log('Backend not available, using mock authentication');

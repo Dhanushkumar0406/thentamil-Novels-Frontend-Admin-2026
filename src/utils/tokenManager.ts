@@ -2,8 +2,8 @@
 // Token Management - Secure Storage
 // ==============================================
 
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'auth_user';
+const TOKEN_KEY = 'authToken';  // Must match authService.ts
+const USER_KEY = 'user';  // Must match authService.ts
 
 export const tokenManager = {
   getToken(): string | null {
